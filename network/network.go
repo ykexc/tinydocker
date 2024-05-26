@@ -3,12 +3,17 @@ package network
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/coreos/go-iptables/iptables"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"tinydocker/config"
 	"tinydocker/log"
+)
+
+var (
+	myChain = "TINY_DOCKER"
 )
 
 type NetConf struct {
@@ -73,13 +78,13 @@ func (n *netMgr) LoadConf() error {
 
 const (
 	defaultNetName = "testbridge"
-	defaultSubnet  = "192.169.0.1/24"
 )
 
 type networktype string
 
 const (
 	BridgeNetworkType networktype = "bridge"
+	DefaultSubnet                 = "192.169.0.1/24"
 )
 
 func (n networktype) String() string {
@@ -88,34 +93,36 @@ func (n networktype) String() string {
 
 func Init() error {
 	// 对默认网络进行初始化
-	if err := BridgeDriver.CreateNetwork(defaultNetName, defaultSubnet, BridgeNetworkType); err != nil {
+	if err := BridgeDriver.CreateNetwork(defaultNetName, DefaultSubnet, BridgeNetworkType); err != nil {
 		return fmt.Errorf("err=%s", err)
 	}
-	if err := IpAmfs.SetIpUsed(defaultSubnet); err != nil {
+	if err := IpAmfs.SetIpUsed(DefaultSubnet); err != nil {
 		return err
 	}
 	return nil
 }
 
-func ConfigDefaultNetworkInNewNet(pid int) error {
+func ConfigDefaultNetworkInNewNet(pid int) (error, net.IP) {
 	// 获取ip
-	ip, err := IpAmfs.AllocIp(defaultSubnet)
+	ip, err := IpAmfs.AllocIp(DefaultSubnet)
 	if err != nil {
-		return fmt.Errorf("ipam alloc ip fail %s", err)
+		return fmt.Errorf("ipam alloc ip fail %s", err), nil
 	}
 
 	// 主机上创建 veth 设备,并连接到网桥上
 	vethLink, networkConf, err := BridgeDriver.CrateVeth(defaultNetName)
 	if err != nil {
-		return fmt.Errorf("create veth fail err=%s", err)
+		return fmt.Errorf("create veth fail err=%s", err), nil
 	}
 	// 主机上设置子进程网络命名空间 配置
 	if err := BridgeDriver.setContainerIp(vethLink.PeerName, pid, ip, networkConf.BridgeIp); err != nil {
-		return fmt.Errorf("setContainerIp fail err=%s peername=%s pid=%d ip=%v conf=%+v", err, vethLink.PeerName, pid, ip, networkConf)
+		return fmt.Errorf("setContainerIp fail err=%s peername=%s pid=%d ip=%v conf=%+v", err, vethLink.PeerName, pid, ip, networkConf), nil
 	}
+
 	// 通知子进程设置完毕
 	log.Debug("parent process set ip success")
-	return noticeSunProcessNetConfigFin(pid)
+	log.Info("ip set success ip:ip %s", ip.String())
+	return noticeSunProcessNetConfigFin(pid), ip
 }
 
 func noticeSunProcessNetConfigFin(pid int) error {
@@ -127,4 +134,34 @@ func WaitParentSetNewNet() {
 	signal.Notify(sigs, syscall.SIGUSR2)
 	<-sigs
 	log.Info("Received SIGUSR2 signal, prepare run container")
+}
+
+func MappingPort(ip, dPort, tDPort string) {
+	tables, err := iptables.New()
+	if err != nil {
+		log.Error("Failed to create iptables rules")
+	}
+	exists, err := tables.ChainExists("nat", myChain)
+	if err != nil {
+		log.Error("Failed to check iptables rules")
+	}
+	if !exists {
+		err = tables.NewChain("nat", myChain)
+	}
+
+	err = tables.InsertUnique("nat", myChain, 1, "-p", "tcp", "--dport", dPort, "-j", "DNAT", "--to-destination", ip+":"+tDPort)
+
+	if err != nil {
+		log.Error("Failed to insert iptables rules")
+	}
+	err = tables.Append("nat", "PREROUTING", "-j", myChain)
+	if err != nil {
+		log.Error("Failed to append iptables rules")
+	}
+	err = tables.InsertUnique("nat", "POSTROUTING", 1, "-p", "tcp", "--source", ip, "--destination", ip, "--dport", tDPort, "-j", "MASQUERADE")
+
+	if err != nil {
+		log.Error("Failed to map port")
+	}
+	log.Info("mapping port success: %s -> %s", dPort, tDPort)
 }

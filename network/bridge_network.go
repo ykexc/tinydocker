@@ -242,3 +242,11 @@ func setInterfaceIP(name string, rawIP string) error {
 	addr := &netlink.Addr{IPNet: ipNet, Peer: ipNet, Label: "", Flags: 0, Scope: 0}
 	return netlink.AddrAdd(iface, addr)
 }
+
+/*
+
+iptables -t nat -A tiny_docker -p tcp --dport 3572 -j DNAT --to-destination 192.169.0.23:80
+iptables -t nat -A POSTROUTING -j MASQUERADE -p tcp --source 192.169.0.23 --destination 192.169.0.23 --dport 80
+iptables -A DOCKER -j ACCEPT -p tcp --destination 192.169.0.22 --dport 80
+
+*/

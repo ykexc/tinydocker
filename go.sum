@@ -1,5 +1,7 @@
 github.com/ThreeKing2018/gocolor v0.0.0-20190625094635-394e0e24c0d0 h1:fFoYXYxBFRE1exQedMZyFy4P1LHGJH1idubWhVuEJ0I=
 github.com/ThreeKing2018/gocolor v0.0.0-20190625094635-394e0e24c0d0/go.mod h1:dG3aFVtzqgcYBEhVjC139oGBy2Z7C92+iyXNaiViDNM=
+github.com/coreos/go-iptables v0.7.0 h1:XWM3V+MPRr5/q51NuWSgU0fqMad64Zyxs8ZUoMsamr8=
+github.com/coreos/go-iptables v0.7.0/go.mod h1:Qe8Bv2Xik5FyTXwgIbLAnv2sWSBmvWdFETJConOQ//Q=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/vishvananda/netlink v1.1.0 h1:1iyaYNBLmP6L0220aDnYQpo1QEV4t4hJ+xEEhhJH8j0=

@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
-	"tinydocker/cgroups"
 	"time"
+	"tinydocker/cgroups"
 	"tinydocker/config"
 	"tinydocker/log"
 	"tinydocker/network"
@@ -50,12 +50,16 @@ func main() {
 			log.Error("config cgroups fail %s", err)
 		}
 
-		if err := network.ConfigDefaultNetworkInNewNet(cmd.Process.Pid); err != nil {
+		err, ip := network.ConfigDefaultNetworkInNewNet(cmd.Process.Pid)
+		if err != nil {
 			log.Error("config network fail %s", err)
 		}
+		network.MappingPort(ip.String(), "3572", "80")
 		cmd.Wait()
+		network.IpAmfs.ReleaseIp(network.DefaultSubnet, ip)
 		cgroups.CleanCgroupsPath(containerName)
 		workspace.DelMntNamespace(containerName)
+
 		return
 	case "init":
 		var (

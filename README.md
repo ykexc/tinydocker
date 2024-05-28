@@ -53,7 +53,10 @@ iptables-save
 -F
 #四表五链指的是：(mangle, raw, filter, nat) (INPUT, FORWARD, OUTPUT, PREROUTING, POSTROUTING)
 #DNat用于端口转发，SNat用于共享上网
-
+#允许防火墙进行路由转发
+iptables -A FORWARD -j ACCEPT
+#内核允许路由转发
+sudo bash -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'
 ```
 
 

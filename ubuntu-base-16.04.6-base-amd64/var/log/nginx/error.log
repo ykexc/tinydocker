@@ -1,2 +1,0 @@
-2024/05/25 07:14:36 [crit] 714#714: *1 stat() "/var/www/html/" failed (13: Permission denied), client: 192.169.0.1, server: _, request: "GET / HTTP/1.1", host: "192.169.0.20"
-2024/05/25 07:14:36 [crit] 714#714: *1 stat() "/var/www/html/" failed (13: Permission denied), client: 192.169.0.1, server: _, request: "GET / HTTP/1.1", host: "192.169.0.20"

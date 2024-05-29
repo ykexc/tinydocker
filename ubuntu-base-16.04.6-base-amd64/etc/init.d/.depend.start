@@ -1,0 +1,5 @@
+TARGETS = killprocs nginx single rc.local ondemand
+INTERACTIVE =
+single: killprocs
+rc.local: nginx
+ondemand: nginx

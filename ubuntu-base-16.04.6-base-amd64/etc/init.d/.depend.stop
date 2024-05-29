@@ -1,0 +1,7 @@
+TARGETS = nginx hwclock.sh urandom sendsigs umountnfs.sh umountfs umountroot halt reboot
+sendsigs: nginx
+umountnfs.sh: sendsigs nginx
+umountfs: umountnfs.sh hwclock.sh urandom nginx
+umountroot: umountfs
+halt: umountroot
+reboot: umountroot

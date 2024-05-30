@@ -75,15 +75,27 @@ func delMntNamespace(path string) error {
 	return nil
 }
 
+func delNormalFile(paths ...string) error {
+	for _, path := range paths {
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("remove dir fail path=%s err=%s", path, err)
+		}
+	}
+	return nil
+}
+
 func DelMntNamespace(containerName string) error {
 	if err := delMntNamespace(mntLayer(containerName)); err != nil {
 		return err
 	}
-	if err := delMntNamespace(workerLayer(containerName)); err != nil {
-		return err
-	}
-	if err := delMntNamespace(writeLayer(containerName)); err != nil {
+	if err := delNormalFile(workerLayer(containerName), writeLayer(containerName)); err != nil {
 		return err
 	}
 	return nil
 }
+
+/**
+
+
+
+ */
